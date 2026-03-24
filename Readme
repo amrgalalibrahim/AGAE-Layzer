@@ -1,0 +1,14 @@
+About Lysine Lactylation
+Lysine lactylation (Kla) is a recently discovered post-translational modification (PTM) where a lactate-derived lactyl group is added to a lysine residue on a protein.
+
+This modification links cellular metabolism (specifically glycolysis) directly to protein function and gene regulation. It has been implicated in various biological processes, including inflammation, immune response, and diseases like cancer.
+
+Predicting potential lactylation sites helps researchers identify key proteins and pathways regulated by this modification, opening new avenues for therapeutic research.
+
+How It Works
+This tool analyzes your input sequence to predict which Lysine (K) residues are likely to be lactylated.
+
+Protein Input: The tool directly scans the protein sequence for Lysine (K) residues and analyzes the flanking amino acids.
+DNA/RNA Input: The nucleic acid sequence is translated into six potential protein sequences (Open Reading Frames).
+Prediction: Each frame is then analyzed individually using the selected prediction model to identify potential lactylation sites.
+AGAE-Lactylation Prediction Workflow
