@@ -31,8 +31,8 @@ Advanced prediction with 6-frame translation support for DNA, RNA, and Protein s
 If you use this tool, please cite:
 
 ```
-Ibrahim, A. G. A. & Adriano, E. A. (2025). 
-AGEA-Layzer: An in-silico tool for predicting lysine lactylation sites.
+Cite as: Amr Galal Abdelraheem Ibrahim, Edson Aparecido Adrano. AGAE-Layzer: An in-silico tool for predicting lysine lactylation sites. Authorea. November 04, 2025.
+DOI: 10.22541/au.176222447.78799278/v1
 ```
 
 ### Contact
