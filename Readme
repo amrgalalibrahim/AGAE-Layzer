@@ -12,3 +12,8 @@ Protein Input: The tool directly scans the protein sequence for Lysine (K) resid
 DNA/RNA Input: The nucleic acid sequence is translated into six potential protein sequences (Open Reading Frames).
 Prediction: Each frame is then analyzed individually using the selected prediction model to identify potential lactylation sites.
 AGAE-Lactylation Prediction Workflow
+
+The online tool is available: https://agae-layzer-v1.netlify.app/ & https://agae-layzer-v2.netlify.app/
+
+If you use please Cite as: Amr Galal Abdelraheem Ibrahim, Edson Aparecido Adrano. AGAE-Layzer: An in-silico tool for predicting lysine lactylation sites. Authorea. November 04, 2025.
+DOI: 10.22541/au.176222447.78799278/v1
