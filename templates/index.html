@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGEA-Layzer V2.0 - Lysine Lactylation Site Prediction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+        .tooltip {
+            position: relative;
+            cursor: pointer;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.875rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .loader {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tab-button {
+            transition: all 0.3s;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .file-upload-area {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s;
+        }
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: #dbeafe;
+        }
+        .info-card {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="min-h-screen py-8 px-4">
+        <div class="container mx-auto max-w-7xl">
+
+            <!-- Header -->
+            <header class="mb-8">
+                <div class="bg-white p-8 rounded-2xl shadow-2xl border border-slate-200">
+                    <div class="text-center">
+                        <h1 class="text-4xl md:text-5xl font-bold gradient-text mb-3">AGEA-Layzer V2.0</h1>
+                        <p class="text-xl text-slate-600 font-semibold mb-2">Lysine Lactylation Site Prediction Tool</p>
+                        <p class="text-slate-500">Advanced prediction with 6-frame translation support for DNA, RNA, and Protein sequences</p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- About Lactylation Section -->
+            <div class="mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        About Lysine Lactylation
+                    </h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="info-card p-5 rounded-xl">
+                            <h3 class="font-bold text-lg text-slate-700 mb-2">What is Lactylation?</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">
+                                Lysine lactylation is a novel post-translational modification (PTM) where lactate-derived lactyl groups are added to lysine residues. 
+                                This epigenetic mark plays crucial roles in gene regulation, cellular metabolism, and disease pathogenesis, particularly in cancer and inflammation.
+                            </p>
+                        </div>
+                        <div class="info-card p-5 rounded-xl">
+                            <h3 class="font-bold text-lg text-slate-700 mb-2">Why Predict Lactylation Sites?</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">
+                                Identifying lactylation sites helps researchers understand protein function regulation, metabolic reprogramming, and disease mechanisms. 
+                                Computational prediction accelerates discovery by prioritizing experimental validation targets and revealing novel regulatory mechanisms.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How It Works Section -->
+            <div class="mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center">
+                        <svg class="w-7 h-7 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                        How the Analysis Works
+                    </h2>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-xl border border-blue-200">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">1</div>
+                                <h3 class="font-bold text-slate-800">Input Processing</h3>
+                            </div>
+                            <p class="text-sm text-slate-600">
+                                Automatically detects sequence type (Protein/DNA/RNA). For nucleic acids, performs 6-frame translation to generate all possible protein sequences.
+                            </p>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-xl border border-green-200">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">2</div>
+                                <h3 class="font-bold text-slate-800">Feature Extraction</h3>
+                            </div>
+                            <p class="text-sm text-slate-600">
+                                Identifies all lysine (K) residues and extracts flanking sequence windows. Computes physicochemical properties and sequence composition features.
+                            </p>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-xl border border-purple-200">
+                            <div class="flex items-center mb-3">
+                                <div class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">3</div>
+                                <h3 class="font-bold text-slate-800">ML Prediction</h3>
+                            </div>
+                            <p class="text-sm text-slate-600">
+                                Applies selected machine learning model (AGEA, LSTM, CNN, etc.) to predict lactylation probability with confidence scores for each site.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <main class="bg-white p-8 rounded-2xl shadow-2xl border border-slate-200">
+
+                <!-- Input Section -->
+                <div id="input-section" class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4 text-slate-800 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        Step 1: Input Your Sequence
+                    </h2>
+                    
+                    <!-- Input Method Toggle -->
+                    <div class="flex gap-4 mb-6">
+                        <button id="paste-tab" class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-md">
+                            <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Paste Sequence
+                        </button>
+                        <button id="upload-tab" class="flex-1 py-3 px-6 rounded-lg font-semibold transition-all bg-slate-200 text-slate-700 hover:bg-slate-300">
+                            <svg class="w-5 h-5 inline-block mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            Upload File
+                        </button>
+                    </div>
+
+                    <!-- Paste Input Area -->
+                    <div id="paste-area" class="input-area">
+                        <p class="mb-4 text-slate-600">
+                            <strong>Paste your sequence in FASTA format.</strong> The tool automatically detects Protein, DNA, or RNA sequences.
+                        </p>
+                        
+                        <div class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+                            <p class="text-sm text-blue-900 font-semibold mb-2">✨ Enhanced in V2.0:</p>
+                            <p class="text-sm text-blue-800">DNA and RNA sequences are automatically translated in all 6 reading frames before lactylation analysis!</p>
+                        </div>
+                        
+                        <textarea id="sequence-input" rows="12" class="w-full p-4 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 font-mono text-sm shadow-sm" placeholder=">Example Protein Sequence
+MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSHGSAQVKGHGKKVADALTNAVAHVDDMPNALSALSDLHAHKLRVDPVNFKLLSHCLLVTLAAHLPAEFTPAVHASLDKFLASVSTVLTSKYR
+
+>Example DNA Sequence
+ATGGTTCTGTCTCCTGCCGACAAGACCAACGTCAAGGCCGCCTGGGGTAAGGTCGGCGCGCACGCTGGCGAGTATGGTGCGGAGGCCCTGGAGAGGATGTTCCTGTCCTTCCCCACCACCAAGACCTACTTCCCGCACTTCGACCTGAGCCACGGCTCTGCCCAGGTTAAGGGCCACGGCAAGAAGGTGGCCGACGCGCTGACCAACGCCGTGGCGCACGTGGACGACATGCCCAACGCGCTGTCCGCCCTGAGCGACCTGCACGCGCACAAGCTGCGCGTGGACCCGGTCAACTTCAAGCTCCTAAGCCACTGCCTGCTGGTGACCCTGGCCGCCCACCTCCCCGCCGAGTTCACCCCTGCGGTGCACGCCTCCCTGGACAAGTTCCTGGCTTCTGTGAGCACCGTGCTGACCTCCAAATACCGTTAA"></textarea>
+                    </div>
+
+                    <!-- File Upload Area -->
+                    <div id="upload-area" class="input-area hidden">
+                        <p class="mb-4 text-slate-600">
+                            <strong>Upload a FASTA file</strong> containing your sequence. Supports .fasta, .fa, .fna, .txt formats.
+                        </p>
+                        
+                        <div id="file-drop-zone" class="file-upload-area p-12 rounded-xl text-center cursor-pointer">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-lg font-semibold text-slate-700 mb-2">Drop your FASTA file here</p>
+                            <p class="text-sm text-slate-500 mb-4">or click to browse</p>
+                            <input type="file" id="file-input" accept=".fasta,.fa,.fna,.txt" class="hidden">
+                            <button id="browse-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
+                                Browse Files
+                            </button>
+                        </div>
+                        
+                        <div id="file-info" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg hidden">
+                            <p class="text-sm text-green-800">
+                                <strong>File loaded:</strong> <span id="file-name"></span> (<span id="file-size"></span>)
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div id="sequence-info" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm hidden">
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div>
+                                <span class="font-semibold text-slate-700">Detected Type:</span> 
+                                <span id="detected-type" class="font-mono font-bold text-blue-600"></span>
+                            </div>
+                            <div>
+                                <span class="font-semibold text-slate-700">Length:</span> 
+                                <span id="sequence-length" class="font-mono font-bold text-green-600"></span>
+                            </div>
+                            <div>
+                                <span class="font-semibold text-slate-700">Status:</span> 
+                                <span id="sequence-status" class="font-bold text-green-600">✓ Valid</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Selection Section -->
+                <div id="controls-section" class="mb-8">
+                     <h2 class="text-2xl font-bold mb-4 text-slate-800 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                        Step 2: Select Prediction Model
+                     </h2>
+                     <p class="mb-4 text-slate-600">Choose a machine learning model for lactylation site prediction. AGEA is recommended for optimal performance.</p>
+                     <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
+                         <select id="model-select" class="flex-grow p-4 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 font-semibold shadow-sm">
+                            <option value="AGEA" selected>AGEA - Adaptive Gapped-Elastic-Average (Recommended)</option>
+                            <option value="LSTM">LSTM - Long Short-Term Memory</option>
+                            <option value="BLSTM">BLSTM - Bidirectional LSTM</option>
+                            <option value="BGRU">BGRU - Bidirectional Gated Recurrent Unit</option>
+                            <option value="CNN">CNN - Convolutional Neural Network</option>
+                            <option value="CNN_BGRU">CNN+BGRU - Hybrid Model</option>
+                         </select>
+                         <button id="predict-btn" class="w-full md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 px-8 rounded-xl hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block -mt-1 mr-2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Predict Lactylation Sites
+                        </button>
+                     </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="results-section" class="pt-8 border-t-2 border-slate-200 hidden">
+                    <h2 class="text-2xl font-bold mb-6 text-slate-800 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Step 3: Prediction Results
+                    </h2>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="loading-indicator" class="flex flex-col items-center justify-center p-16 text-center hidden">
+                        <div class="loader"></div>
+                        <p class="mt-6 text-slate-700 font-semibold text-lg">Analyzing sequence with <span id="loading-model-name" class="font-bold text-blue-600"></span> model...</p>
+                        <p class="mt-2 text-slate-500 text-sm">This may take a moment for nucleic acid sequences (6-frame translation)</p>
+                    </div>
+                    
+                    <!-- Error Message -->
+                    <div id="error-message" class="bg-red-50 border-l-4 border-red-500 text-red-800 p-5 rounded-xl hidden shadow-md" role="alert">
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span id="error-text"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Output -->
+                    <div id="results-output"></div>
+                </div>
+
+            </main>
+            
+            <!-- Footer -->
+            <footer class="mt-8 text-center">
+                <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
+                    <div class="mb-4">
+                        <p class="text-slate-700 font-semibold mb-1">Created by <span class="text-blue-600">Amr G. A. Ibrahim</span></p>
+                        <p class="text-sm text-slate-600">
+                            Email: <a href="mailto:amrgalalibrahim@gmail.com" class="text-blue-600 hover:text-blue-800 underline">amrgalalibrahim@gmail.com</a>
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-200">
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            <strong>If you use this tool, please cite:</strong><br>
+                            Ibrahim, A. G. A. & Adriano, E. A. (2025). AGEA-Layzer: An in-silico tool for predicting lysine lactylation sites.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-200">
+                        <p class="text-xs text-slate-500">
+                            AGEA-Layzer V2.0 | Enhanced with 6-Frame Translation Support | © 2025
+                        </p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const sequenceInput = document.getElementById('sequence-input');
+        const modelSelect = document.getElementById('model-select');
+        const predictBtn = document.getElementById('predict-btn');
+        const resultsSection = document.getElementById('results-section');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const loadingModelName = document.getElementById('loading-model-name');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const resultsOutput = document.getElementById('results-output');
+        const sequenceInfo = document.getElementById('sequence-info');
+        const detectedType = document.getElementById('detected-type');
+        const sequenceLength = document.getElementById('sequence-length');
+        const sequenceStatus = document.getElementById('sequence-status');
+
+        // File upload elements
+        const pasteTab = document.getElementById('paste-tab');
+        const uploadTab = document.getElementById('upload-tab');
+        const pasteArea = document.getElementById('paste-area');
+        const uploadArea = document.getElementById('upload-area');
+        const fileDropZone = document.getElementById('file-drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+
+        let currentResults = null;
+
+        // Tab switching
+        pasteTab.addEventListener('click', () => {
+            pasteTab.classList.remove('bg-slate-200', 'text-slate-700');
+            pasteTab.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            uploadTab.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            uploadTab.classList.add('bg-slate-200', 'text-slate-700');
+            pasteArea.classList.remove('hidden');
+            uploadArea.classList.add('hidden');
+        });
+
+        uploadTab.addEventListener('click', () => {
+            uploadTab.classList.remove('bg-slate-200', 'text-slate-700');
+            uploadTab.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+            pasteTab.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+            pasteTab.classList.add('bg-slate-200', 'text-slate-700');
+            uploadArea.classList.remove('hidden');
+            pasteArea.classList.add('hidden');
+        });
+
+        // File upload handlers
+        browseBtn.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFileSelect(e.target.files[0]);
+        });
+
+        // Drag and drop
+        fileDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.add('dragover');
+        });
+
+        fileDropZone.addEventListener('dragleave', () => {
+            fileDropZone.classList.remove('dragover');
+        });
+
+        fileDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.remove('dragover');
+            handleFileSelect(e.dataTransfer.files[0]);
+        });
+
+        fileDropZone.addEventListener('click', () => fileInput.click());
+
+        function handleFileSelect(file) {
+            if (!file) return;
+
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                sequenceInput.value = e.target.result;
+                // Auto-detect and show info
+                updateSequenceInfo();
+            };
+            reader.readAsText(file);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        // Auto-update sequence info on input
+        sequenceInput.addEventListener('input', updateSequenceInfo);
+
+        function updateSequenceInfo() {
+            const sequence = sequenceInput.value.trim();
+            if (!sequence) {
+                sequenceInfo.classList.add('hidden');
+                return;
+            }
+
+            // Simple detection (client-side preview)
+            const clean = sequence.replace(/>.*\n/g, '').replace(/\s/g, '').toUpperCase();
+            const hasU = clean.includes('U');
+            const hasT = clean.includes('T');
+            const nucleotideRatio = (clean.match(/[ATGCU]/g) || []).length / clean.length;
+
+            let type = 'PROTEIN';
+            if (nucleotideRatio > 0.9) {
+                type = hasU ? 'RNA' : 'DNA';
+            }
+
+            detectedType.textContent = type;
+            sequenceLength.textContent = clean.length;
+            sequenceInfo.classList.remove('hidden');
+        }
+
+        // Predict button click handler
+        predictBtn.addEventListener('click', async () => {
+            const sequence = sequenceInput.value.trim();
+            const model = modelSelect.value;
+
+            if (!sequence) {
+                showError('Please enter or upload a sequence.');
+                return;
+            }
+
+            // Show loading
+            resultsSection.classList.remove('hidden');
+            loadingIndicator.classList.remove('hidden');
+            loadingModelName.textContent = model;
+            errorMessage.classList.add('hidden');
+            resultsOutput.innerHTML = '';
+
+            try {
+                // Call API with timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+                
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sequence: sequence,
+                        model: model
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+
+                // Check if response is OK first
+                if (!response.ok) {
+                    let errorMsg = 'Prediction failed';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorMsg;
+                    } catch (e) {
+                        errorMsg = `Server error: ${response.status} ${response.statusText}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                // Parse JSON response
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    throw new Error('Invalid response from server. Please try again.');
+                }
+
+                // Store results
+                currentResults = data;
+
+                // Hide loading
+                loadingIndicator.classList.add('hidden');
+
+                // Display results
+                displayResults(data);
+
+            } catch (error) {
+                loadingIndicator.classList.add('hidden');
+                if (error.name === 'AbortError') {
+                    showError('Request timed out. Please try again with a shorter sequence.');
+                } else if (error.message.includes('Failed to fetch')) {
+                    showError('Network error. Please check your connection and try again.');
+                } else {
+                    showError(error.message || 'An unexpected error occurred. Please try again.');
+                }
+                console.error('Prediction error:', error);
+            }
+        });
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+            resultsSection.classList.remove('hidden');
+        }
+
+        function displayResults(data) {
+            resultsOutput.innerHTML = '';
+
+            // Show sequence info
+            sequenceInfo.classList.remove('hidden');
+            detectedType.textContent = data.sequence_type;
+            sequenceLength.textContent = data.sequence_length;
+
+            // Display based on sequence type
+            if (data.sequence_type === 'PROTEIN') {
+                displayProteinResults(data);
+            } else {
+                displayNucleicAcidResults(data);
+            }
+        }
+
+        function displayProteinResults(data) {
+            const { predictions, statistics, sequence } = data;
+
+            // Statistics summary
+            let html = '<div class="mb-6 p-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border-2 border-slate-200 shadow-md">';
+            html += '<h3 class="text-xl font-bold mb-4 text-slate-800">Summary Statistics</h3>';
+            html += '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
+            html += `<div class="text-center p-5 bg-white rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-3xl font-bold text-blue-600">${statistics.total_sites}</div>
+                        <div class="text-sm text-slate-600 font-semibold mt-1">Total K Sites</div>
+                     </div>`;
+            html += `<div class="text-center p-5 bg-white rounded-xl shadow-sm border border-green-200">
+                        <div class="text-3xl font-bold text-green-600">${statistics.total_lactylated}</div>
+                        <div class="text-sm text-slate-600 font-semibold mt-1">Lactylated (+)</div>
+                     </div>`;
+            html += `<div class="text-center p-5 bg-white rounded-xl shadow-sm border border-red-200">
+                        <div class="text-3xl font-bold text-red-600">${statistics.total_non_lactylated}</div>
+                        <div class="text-sm text-slate-600 font-semibold mt-1">Non-Lactylated (-)</div>
+                     </div>`;
+            html += '</div></div>';
+
+            // Sequence view
+            html += '<div class="mb-6 p-6 bg-slate-50 rounded-xl border-2 border-slate-200 shadow-md">';
+            html += '<h3 class="text-xl font-bold mb-4 text-slate-800">Sequence View</h3>';
+            html += '<div class="font-mono text-sm break-all leading-relaxed p-4 bg-white rounded-lg border border-slate-200">';
+            
+            const predMap = new Map(predictions.map(p => [p.position - 1, p]));
+            for (let i = 0; i < sequence.length; i++) {
+                const char = sequence[i];
+                if (predMap.has(i)) {
+                    const pred = predMap.get(i);
+                    const isLact = pred.label === '+';
+                    const bgColor = isLact ? 'bg-green-300' : 'bg-red-300';
+                    const textColor = isLact ? 'text-green-900' : 'text-red-900';
+                    html += `<span class="tooltip rounded px-1 ${bgColor} ${textColor} font-bold">
+                               ${char}
+                               <span class="tooltip-text">${pred.prediction}<br>Position: ${pred.position}<br>Score: ${pred.score.toFixed(3)}<br>Confidence: ${pred.confidence.toFixed(3)}</span>
+                             </span>`;
+                } else {
+                    html += char;
+                }
+            }
+            html += '</div></div>';
+
+            // Detailed table
+            html += createDetailedTable(predictions);
+
+            // Export buttons
+            html += createExportButtons();
+
+            resultsOutput.innerHTML = html;
+            attachExportHandlers();
+        }
+
+        function displayNucleicAcidResults(data) {
+            const { predictions, statistics, frames } = data;
+
+            // Statistics summary
+            let html = '<div class="mb-6 p-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border-2 border-slate-200 shadow-md">';
+            html += '<h3 class="text-xl font-bold mb-4 text-slate-800">Overall Statistics (All 6 Frames)</h3>';
+            html += '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
+            html += `<div class="text-center p-5 bg-white rounded-xl shadow-sm border border-slate-200">
+                        <div class="text-3xl font-bold text-blue-600">${statistics.total_sites}</div>
+                        <div class="text-sm text-slate-600 font-semibold mt-1">Total K Sites</div>
+                     </div>`;
+            html += `<div class="text-center p-5 bg-white rounded-xl shadow-sm border border-green-200">
+                        <div class="text-3xl font-bold text-green-600">${statistics.total_lactylated}</div>
+                        <div class="text-sm text-slate-600 font-semibold mt-1">Lactylated (+)</div>
+                     </div>`;
+            html += `<div class="text-center p-5 bg-white rounded-xl shadow-sm border border-red-200">
+                        <div class="text-3xl font-bold text-red-600">${statistics.total_non_lactylated}</div>
+                        <div class="text-sm text-slate-600 font-semibold mt-1">Non-Lactylated (-)</div>
+                     </div>`;
+            html += '</div></div>';
+
+            // Frame tabs
+            html += '<div class="mb-6">';
+            html += '<h3 class="text-xl font-bold mb-4 text-slate-800">Results by Reading Frame</h3>';
+            html += '<div class="flex flex-wrap gap-2 mb-4">';
+            
+            const frameNames = ['+1', '+2', '+3', '-1', '-2', '-3'];
+            frameNames.forEach((frame, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                html += `<button class="tab-button ${activeClass} px-5 py-3 rounded-lg border-2 border-slate-300 font-semibold" data-frame="${frame}">Frame ${frame}</button>`;
+            });
+            html += '</div>';
+
+            // Frame content
+            frameNames.forEach((frame, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                const framePreds = predictions[frame] || [];
+                const frameInfo = frames[frame];
+                
+                html += `<div class="tab-content ${activeClass}" data-frame="${frame}">`;
+                html += '<div class="p-6 bg-slate-50 rounded-xl border-2 border-slate-200 shadow-md">';
+                html += `<h4 class="font-bold text-lg mb-3 text-slate-800">Frame ${frame} - Translated Protein</h4>`;
+                html += `<div class="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded text-sm">`;
+                html += `<p class="text-slate-700"><strong>Length:</strong> ${frameInfo.length} aa | <strong>Lysine (K):</strong> ${frameInfo.lysine_count} | <strong>Stop codons:</strong> ${frameInfo.stop_codons}</p>`;
+                html += `</div>`;
+                
+                // Sequence view for this frame
+                html += '<div class="font-mono text-xs break-all leading-relaxed p-4 bg-white rounded-lg border border-slate-200 max-h-48 overflow-y-auto">';
+                const predMap = new Map(framePreds.map(p => [p.position - 1, p]));
+                for (let i = 0; i < frameInfo.sequence.length; i++) {
+                    const char = frameInfo.sequence[i];
+                    if (predMap.has(i)) {
+                        const pred = predMap.get(i);
+                        const isLact = pred.label === '+';
+                        const bgColor = isLact ? 'bg-green-300' : 'bg-red-300';
+                        const textColor = isLact ? 'text-green-900' : 'text-red-900';
+                        html += `<span class="tooltip rounded px-0.5 ${bgColor} ${textColor} font-bold">
+                                   ${char}
+                                   <span class="tooltip-text">${pred.prediction}<br>Position: ${pred.position}<br>Score: ${pred.score.toFixed(3)}</span>
+                                 </span>`;
+                    } else {
+                        html += char;
+                    }
+                }
+                html += '</div>';
+
+                // Predictions table for this frame
+                if (framePreds.length > 0) {
+                    html += '<div class="mt-5">';
+                    html += '<h5 class="font-bold mb-3 text-slate-800">Predictions</h5>';
+                    html += createDetailedTable(framePreds);
+                    html += '</div>';
+                } else {
+                    html += '<p class="mt-4 text-sm text-slate-500 italic">No lysine residues found in this frame.</p>';
+                }
+                
+                html += '</div></div>';
+            });
+
+            html += '</div>';
+
+            // Export buttons
+            html += createExportButtons();
+
+            resultsOutput.innerHTML = html;
+            
+            // Attach tab handlers
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const frame = e.target.dataset.frame;
+                    
+                    // Update active tab
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // Update active content
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    document.querySelector(`.tab-content[data-frame="${frame}"]`).classList.add('active');
+                });
+            });
+
+            attachExportHandlers();
+        }
+
+        function createDetailedTable(predictions) {
+            let html = '<div class="overflow-x-auto rounded-lg border border-slate-200">';
+            html += '<table class="min-w-full bg-white text-sm">';
+            html += '<thead class="bg-gradient-to-r from-slate-100 to-slate-200">';
+            html += '<tr>';
+            html += '<th class="px-4 py-3 border-b font-bold text-left text-slate-700">Position</th>';
+            html += '<th class="px-4 py-3 border-b font-bold text-left text-slate-700">Window</th>';
+            html += '<th class="px-4 py-3 border-b font-bold text-center text-slate-700">Prediction</th>';
+            html += '<th class="px-4 py-3 border-b font-bold text-center text-slate-700">Score</th>';
+            html += '<th class="px-4 py-3 border-b font-bold text-center text-slate-700">Confidence</th>';
+            html += '</tr>';
+            html += '</thead>';
+            html += '<tbody>';
+            
+            predictions.forEach((pred, idx) => {
+                const rowColor = pred.label === '+' ? 'bg-green-50' : 'bg-red-50';
+                const labelColor = pred.label === '+' ? 'text-green-700 bg-green-200' : 'text-red-700 bg-red-200';
+                const borderColor = idx < predictions.length - 1 ? 'border-b' : '';
+                html += `<tr class="${rowColor}">`;
+                html += `<td class="px-4 py-3 ${borderColor} font-mono font-semibold">${pred.position}</td>`;
+                html += `<td class="px-4 py-3 ${borderColor} font-mono text-xs">${pred.window}</td>`;
+                html += `<td class="px-4 py-3 ${borderColor} text-center"><span class="px-3 py-1 rounded-full font-bold ${labelColor}">${pred.label}</span></td>`;
+                html += `<td class="px-4 py-3 ${borderColor} text-center font-mono">${pred.score.toFixed(4)}</td>`;
+                html += `<td class="px-4 py-3 ${borderColor} text-center font-mono">${pred.confidence.toFixed(4)}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody>';
+            html += '</table>';
+            html += '</div>';
+            
+            return html;
+        }
+
+        function createExportButtons() {
+            let html = '<div class="mt-8 p-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border-2 border-slate-200 shadow-md">';
+            html += '<h3 class="text-xl font-bold mb-4 text-slate-800 flex items-center">';
+            html += '<svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>';
+            html += 'Export Results</h3>';
+            html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">';
+            html += '<button class="export-btn bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-green-700 transition font-semibold shadow-md hover:shadow-lg" data-format="csv">📄 CSV</button>';
+            html += '<button class="export-btn bg-emerald-600 text-white px-5 py-3 rounded-lg hover:bg-emerald-700 transition font-semibold shadow-md hover:shadow-lg" data-format="excel">📊 Excel</button>';
+            html += '<button class="export-btn bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition font-semibold shadow-md hover:shadow-lg" data-format="json">🔧 JSON</button>';
+            html += '<button class="export-btn bg-purple-600 text-white px-5 py-3 rounded-lg hover:bg-purple-700 transition font-semibold shadow-md hover:shadow-lg" data-format="text">📝 Report</button>';
+            html += '</div>';
+            html += '</div>';
+            
+            return html;
+        }
+
+        function attachExportHandlers() {
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const format = e.target.dataset.format;
+                    await exportResults(format);
+                });
+            });
+        }
+
+        async function exportResults(format) {
+            if (!currentResults) return;
+
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        predictions: currentResults.predictions,
+                        sequence_info: {
+                            type: currentResults.sequence_type,
+                            length: currentResults.sequence_length,
+                            model: currentResults.model_used
+                        },
+                        statistics: currentResults.statistics,
+                        format: format
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Trigger download
+                    const filename = data.file.split('/').pop();
+                    window.location.href = `/api/download/${filename}`;
+                } else {
+                    alert('Export failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Export failed: ' + error.message);
+            }
+        }
+    </script>
+
+</body>
+</html>
+
