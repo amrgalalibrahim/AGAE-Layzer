@@ -45,3 +45,4 @@ DOI: 10.22541/au.176222447.78799278/v1
 **Version**: 2.0  
 **License**: For research and educational purposes
 
+**For more information**, go to: AGAE_Layzer_Comprehensive_Documentation.docx
