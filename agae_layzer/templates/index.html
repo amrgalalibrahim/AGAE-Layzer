@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGAE-Layzer</title>
+<style>
+:root{--ink:#1d2433;--muted:#5b6475;--line:#d9dee7;--bg:#f6f7f9;--card:#fff;--acc:#1f5f8b;--kla:#b3261e;--non:#5b6475}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{background:var(--acc);color:#fff;padding:14px 24px}
+header h1{margin:0;font-size:21px;font-weight:600}
+header p{margin:2px 0 0;font-size:13px;opacity:.9}
+main{max-width:1540px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:380px minmax(0,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
+.card h2{margin:0 0 10px;font-size:15px;font-weight:600}
+.tag{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--ink);border-radius:3px;padding:1px 6px;margin-right:6px}
+textarea{width:100%;height:190px;font:12px/1.35 Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+label{display:block;font-size:13px;margin:8px 0 3px;color:var(--muted)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.opt{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink);margin:4px 0}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg label{margin:0;padding:6px 10px;cursor:pointer;color:var(--ink)}
+.seg input{display:none}.seg input:checked+span{font-weight:700;color:var(--acc)}
+input[type=number]{width:80px;padding:4px 6px;border:1px solid var(--line);border-radius:5px}
+button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:9px 16px;font-size:14px;cursor:pointer}
+button.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.stats{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.stat{flex:1;min-width:120px;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.stat b{display:block;font-size:20px}.stat span{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;white-space:nowrap}
+th{background:#eef1f5;position:sticky;top:0}
+td.win{font-family:Consolas,monospace;font-size:11.5px}
+td.win em{font-style:normal;font-weight:700;color:var(--kla)}
+.kla{color:var(--kla);font-weight:700}.non{color:var(--non)}
+.tablewrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.bar{display:inline-block;height:8px;background:var(--acc);border-radius:2px;vertical-align:middle;margin-right:6px}
+#msg{font-size:13px;color:var(--kla);margin-top:8px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>AGAE-Layzer</h1><p>Lysine lactylation (Kla) site prediction from protein, RNA or DNA sequences</p></header>
+<main>
+<section class="card" id="panelA">
+<h2><span class="tag">A</span>Sequence input and version</h2>
+<label for="fasta">FASTA sequence(s): protein, RNA or DNA (type is detected automatically)</label>
+<textarea id="fasta" spellcheck="false"></textarea>
+<div class="row" style="margin-top:6px"><input type="file" id="file" accept=".fa,.fasta,.txt,.fna,.faa"><button class="sec" id="example" type="button">Load example</button></div>
+<label>Model version</label>
+<div class="seg">
+<label><input type="radio" name="ver" value="v2" checked><span>V2.0.0 ensemble</span></label>
+<label><input type="radio" name="ver" value="v1"><span>V1.0.0 SVM</span></label>
+</div>
+<label>Nucleic-acid options</label>
+<div class="opt"><input type="checkbox" id="atg"> Trim ORFs to first ATG</div>
+<div class="opt"><input type="checkbox" id="ds"> Treat RNA as double-stranded cDNA (6 frames)</div>
+<div class="opt"><input type="checkbox" id="cds"> Input is an annotated CDS (frame +1 only)</div>
+<div class="row"><label style="margin:0">Minimum ORF (aa)</label><input type="number" id="minorf" value="30" min="10"><label style="margin:0">Threshold</label><input type="number" id="thr" value="0.5" step="0.05" min="0" max="1"></div>
+<div style="margin-top:12px"><button id="run" type="button">Predict lactylation sites</button></div>
+<div id="msg"></div>
+</section>
+<section class="card" id="panelB">
+<h2><span class="tag">B</span>Results</h2>
+<div class="stats"><div class="stat"><b id="sType">–</b><span>input type</span></div><div class="stat"><b id="sK">–</b><span>lysines analysed</span></div><div class="stat"><b id="sKla">–</b><span>predicted Kla</span></div><div class="stat"><b id="sModel">–</b><span>model</span></div></div>
+<div class="row" style="margin-bottom:8px"><span class="tag">C</span><button class="sec" id="csv" type="button">Export CSV</button><button class="sec" id="json" type="button">Export JSON</button><label class="opt" style="margin:0"><input type="checkbox" id="onlyKla"> show predicted Kla only</label></div>
+<div class="tablewrap"><table><thead><tr><th>Sequence</th><th>Strand</th><th>Frame</th><th>K pos (aa)</th><th>Codon</th><th>nt start–end</th><th>31-residue window</th><th>Probability</th><th>Prediction</th></tr></thead><tbody id="tb"></tbody></table></div>
+</section>
+</main>
+<script>
+const API = window.AGAE_API || "";
+let last = [];
+const EX = ">A_thaliana_chloroplast_rbcL_5prime NC_000932\nGACCTTGTTGTTTTGTTTTATTGCAAGAATTCTAAATTCATGACTTGTAGGGAGGGACTTATGTCACCACAAACAGAGACTAAAGCAAGTGTTGGGTTCAAAGCTGGTGTTAAAGAGTATAAATTGACTTACTATACTCCTGAATATGAAACCAAGGATACTGATATCTTGGCAGCATTCCGAGTAACTCCTCAACCTGGAGTTCCACCTGAAGAAGCAGGGGCTGCGGTAGCTGCTGAATCTTCTACTGGTACATGGACAACTGTGTGGACCGATGGGCTTACCAGCCTTGATCGTTACAAAGGACGATGCTACCACATCGAGCCCGTTCCAGGAGAAGAAACTCAATTTATTGCGTATGTAGCTTATCCCTTAGACCTTTTTGAAGAAGGTTCGGTTACTAACATGTTTACCTCGATT";
+document.getElementById("example").onclick=()=>{fasta.value=EX};
+document.getElementById("file").onchange=e=>{const f=e.target.files[0]; if(f){f.text().then(t=>fasta.value=t)}};
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function render(){
+  const only=document.getElementById("onlyKla").checked;
+  const rows=last.filter(r=>!only||r.prediction==="Kla").slice(0,5000);
+  tb.innerHTML=rows.map(r=>`<tr><td>${esc(r.seq_id)}</td><td>${r.strand}</td><td>${r.frame||"–"}</td><td>${r.k_pos_in_orf}</td><td>${r.codon||"–"}</td><td>${r.nt_start?r.nt_start+"–"+r.nt_end:"–"}</td><td class="win">${esc(r.window.slice(0,15))}<em>K</em>${esc(r.window.slice(16))}</td><td><span class="bar" style="width:${Math.round(r.probability*50)}px"></span>${r.probability.toFixed(3)}</td><td class="${r.prediction==="Kla"?"kla":"non"}">${r.prediction}</td></tr>`).join("");
+}
+document.getElementById("onlyKla").onchange=render;
+document.getElementById("run").onclick=async()=>{
+  msg.textContent="";
+  const ver=document.querySelector("input[name=ver]:checked").value;
+  const body={fasta:fasta.value,version:ver,threshold:+thr.value,min_orf:+minorf.value,require_atg:atg.checked,rna_double_stranded:ds.checked,cds:cds.checked};
+  try{
+    const r=await fetch(API+"/api/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const j=await r.json(); if(j.error){msg.textContent=j.error;return}
+    last=j.predictions;
+    sType.textContent=[...new Set(Object.values(j.sequence_types))].join(", ");
+    sK.textContent=j.n_lysines; sKla.textContent=j.n_predicted_kla; sModel.textContent=ver==="v2"?"V2.0.0":"V1.0.0";
+    render();
+  }catch(e){msg.textContent="Server not reachable: "+e}
+};
+function dl(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
+const COLS=["seq_id","input_type","strand","frame","orf_aa_start","k_pos_in_orf","codon","nt_start","nt_end","window","probability","prediction","model"];
+document.getElementById("csv").onclick=()=>dl("agae_layzer_predictions.csv",[COLS.join(",")].concat(last.map(r=>COLS.map(c=>r[c]).join(","))).join("\n"),"text/csv");
+document.getElementById("json").onclick=()=>dl("agae_layzer_predictions.json",JSON.stringify(last,null,1),"application/json");
+</script>
+</body>
+</html>
